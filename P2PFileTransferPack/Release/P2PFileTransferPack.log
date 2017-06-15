@@ -1,0 +1,32 @@
+﻿  CThread.cpp
+  main.cc
+h:\webrtc\webrtc2014819\talk\examples\peerconnection\mywebrtc\p2pdata\WebrtcOutterClientExe.h(5): fatal error C1083: Cannot open include file: 'webrtc\base\sigslot.h': No such file or directory
+  main_wnd.cc
+h:\webrtc\webrtc2014819\talk\examples\peerconnection\mywebrtc\P2PData/WebrtcOutterClientExe.h(5): fatal error C1083: Cannot open include file: 'webrtc\base\sigslot.h': No such file or directory
+  CFileMd5.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\CFileMd5.cc(2): fatal error C1083: Cannot open include file: 'webrtc/base/logging.h': No such file or directory
+  CHandleBase.cc
+  defaults.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\defaults.cc(31): fatal error C1083: Cannot open include file: 'webrtc/base/common.h': No such file or directory
+  DllInterface.cc
+  JsonFileIO.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\JsonFileIO.cc(3): fatal error C1083: Cannot open include file: 'webrtc/base/json.h': No such file or directory
+  P2PDllInterface.cpp
+h:\webrtc\webrtc2014819\talk\examples\peerconnection\mywebrtc\p2pdata\WebrtcOutterClientExe.h(5): fatal error C1083: Cannot open include file: 'webrtc\base\sigslot.h': No such file or directory
+  P2PThread.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\P2PThread.cc(5): fatal error C1083: Cannot open include file: 'webrtc/base/logging.h': No such file or directory
+  SocketDecorator.cpp
+..\talk\examples\peerconnection\MyWebrtc\P2PData\SocketDecorator.cpp(4): fatal error C1083: Cannot open include file: 'webrtc/base/win32socketserver.h': No such file or directory
+  TransferData.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\TransferData.cc(1): fatal error C1083: Cannot open include file: 'webrtc/mediastreaminterface.h': No such file or directory
+  WebrtcClient.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\WebrtcClient.cc(12): fatal error C1083: Cannot open include file: 'webrtc/base/stringutils.h': No such file or directory
+  WebrtcClientExe.cc
+  WebrtcClientOutterInterface.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\WebrtcClientOutterInterface.cc(1): fatal error C1083: Cannot open include file: 'webrtc/mediastreaminterface.h': No such file or directory
+  WebrtcConductor.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\WebrtcConductor.cc(4): fatal error C1083: Cannot open include file: 'webrtc/mediastreaminterface.h': No such file or directory
+  WebrtcInitInterface.cc
+..\talk\examples\peerconnection\MyWebrtc\P2PData\WebrtcInitInterface.cc(3): fatal error C1083: Cannot open include file: 'webrtc/base/ssladapter.h': No such file or directory
+  WebrtcOutterClientExe.cc
+h:\webrtc\webrtc2014819\talk\examples\peerconnection\mywebrtc\p2pdata\WebrtcOutterClientExe.h(5): fatal error C1083: Cannot open include file: 'webrtc\base\sigslot.h': No such file or directory

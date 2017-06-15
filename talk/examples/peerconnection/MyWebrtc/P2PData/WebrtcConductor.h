@@ -1,0 +1,466 @@
+﻿#ifndef  WEBRTC_CONDUCTOR_HEADER
+#define  WEBRTC_CONDUCTOR_HEADER
+//add by  in 2016.12.07
+#include "P2PThread.h"
+#include "TransferData.h"
+#include "WebrtcClient.h"
+#include "WebrtcClientOutterInterface.h"
+#include "defaults.h"
+#include "DllInterface.h"
+
+#include <vector>
+#include <deque>
+#include <map>
+#include <string>
+
+#include "WebrtcClient.h"
+#include<assert.h>
+//
+#define Re_Send_Times_WhenFailure  200
+EXTERN_C_BEGIN
+//////////some typedef 
+typedef WebrtcClientOutterInterfaceNSP::MessageDeliverPacket MessageDeliverPacket;
+////////////
+namespace WebrtcConductorTool
+{
+    WEBRTCP2PDLLSHARED_EXPORT extern const char kCandidateSdpMidName_Super[];
+    WEBRTCP2PDLLSHARED_EXPORT extern const char kCandidateSdpMlineIndexName_Super[];
+    WEBRTCP2PDLLSHARED_EXPORT extern const char kCandidateSdpName_Super[];
+
+	// Names used for a SessionDescription JSON object.
+    WEBRTCP2PDLLSHARED_EXPORT extern const char kSessionDescriptionTypeName_Super[];
+    WEBRTCP2PDLLSHARED_EXPORT extern const char kSessionDescriptionSdpName_Super[];
+
+	///////////some extern parama 
+    WEBRTCP2PDLLSHARED_EXPORT extern const bool DTLS_ON;
+    WEBRTCP2PDLLSHARED_EXPORT extern const bool DTLS_OFF;
+}
+///////////
+namespace TransferNamespace
+{
+	class STLStringShaow;
+	class ContainerInfoShaowBase;
+}
+
+typedef TransferNamespace::STLStringShaow  STLStringShaow;
+typedef TransferNamespace::ContainerInfoShaowBase  ContainerInfoShaowBase;
+//////////
+class  DummySetSessionDescriptionObserverSuper;
+//webrtc conductor's could deal the message type
+enum WebrtcClientOutterMsg
+{
+	LOGIN_IN_SERVER = 1,
+	LOGIN_OUT_SERVER ,
+	CONNECT_PEER,
+	DISCONNECT_PEER,
+	MEDIA_CHANNELS_INITIALIZED,//media channels is initialized whether or not
+	PEER_CONNECTION_CLOSED,		   //the connection of connect with opposite client is close
+	SEND_MESSAGE_TO_PEER,		   //send message to opposite client
+	NEW_STREAM_ADDED,		       //add  new stream to the webrtc connection
+	STREAM_REMOVED,			       //remove the stream of webrtc connection, the stream is aready added before
+	SEND_DATA_CHANNEL,			   //add by  in 2016.10.22 send orignal data
+	RECIEVE_DATA_CHANNEL,		   //recieve the normal data 
+	CREATE_FILE_REPOSITORY,		   //create the file repository  in 2017/3/1
+	DELETE_FILE_REPOSITORY,        //delete the file repository in 2017/4/25
+	SEND_FILE_CHANNEL,			   //add by  in 2016.11.29 send file data
+	RECIEVE_FILE_CHANNEL,		   //add by yunling in 2016.12.09
+	CREATE_FILE_CHANNEL,		   //create file for recieve sender's send data to save
+	CAN_SEND_FILE,				   //inform opposite file sender continue send it's file datas
+	NOT_CAN_SEND_FILE,
+	INTERRUPT_FILE_TRANSFER_TASK,
+	RESTART_FILE_TRANSFER_TASK,
+	CANCLE_FILE_TRANSFER_TASK,    // cancle the transfering file thread
+	END_SEND_FILE,				   //succese recieve the data which file sender
+	SEND_FILE_SUCCESS,
+	SEND_FILE_FAILURE,
+	SHAKE_ACK_PACKET		       // file sender the packet is roll bewteen file reciever and file sender
+};
+/////////////the interface which WebrtcConductor will use that be blow 
+class  WEBRTCP2PDLLSHARED_EXPORT ConductorAssemblyInit
+{
+public:
+	virtual ~ConductorAssemblyInit();
+public:
+	virtual void CreateP2PThreadManager(P2PThreadManagerBase * value) = 0;
+	virtual void ReleaseP2PThreadManager() = 0;
+	virtual void CreateConductor(ConductorBase * value) = 0;
+	virtual void ReleaseConductor() = 0;
+};
+
+class WEBRTCP2PDLLSHARED_EXPORT ConductorExchangePosition
+{
+public:
+	virtual ~ConductorExchangePosition();
+public:
+	virtual void  SetOppositeSDPInformation(const std::string & sdp) = 0;
+	virtual void  SetOppositeIceCandidate(const std::vector<std::string >&icecandidate) = 0;
+	virtual const std::string&   GetOwerSDPInformation() = 0;
+	virtual const std::vector<std::string> * GetOwerIceCandidate() = 0;
+};
+
+class WEBRTCP2PDLLSHARED_EXPORT ConductorExchangeVideo
+{
+public:
+	virtual void* OpenVideoCaptureDevice() = 0;
+	virtual void StartLocalRenderer(void* local_video) = 0;
+	virtual void StopLocalRenderer() = 0;
+	virtual void StartRemoteRenderer(void * remote_video) = 0;
+	virtual void StopRemoteRenderer() = 0;
+};
+
+
+class WEBRTCP2PDLLSHARED_EXPORT ConductorFileOperatorBase
+{	
+public:
+	virtual ~ConductorFileOperatorBase();
+public:
+	virtual void  AcceptFile(void * param) = 0;
+	virtual void  RefuseFile(void * param) = 0;
+	virtual bool  InterruptFileTask(void * param) = 0;
+	virtual bool  RestartFileTask(void * param) = 0;
+	virtual bool  CancleFileTask(void * param) = 0;
+	virtual bool  CreateRecieveFile(void * param, void * param1) = 0;
+	virtual bool  DeleteRecieveFile(void * param) = 0 ;
+};
+/////////////////
+class WEBRTCP2PDLLSHARED_EXPORT ConductorBusiness:public ConductorAssemblyInit,public ConductorExchangePosition
+	,public ConductorFileOperatorBase
+{
+public:
+	virtual ~ConductorBusiness();
+};
+
+//DllExtern_Fixed_Interface(SessionConnectionObserverInterface);
+class WebrtcConductorBase;
+class SessionConnectionObserverInterface;
+DllExtern_Fixed_Interface_1(SessionConnectionObserverInterface,WebrtcConductorBase*)
+/////////////
+class WEBRTCP2PDLLSHARED_EXPORT WebrtcConductorBase :public WebrtcClientObserver,
+	public WebrtcClientOutterIterator,
+	public ConductorBusiness
+{
+public:
+	virtual ~WebrtcConductorBase();
+	friend class SessionConnectionObserver;
+public:
+	virtual bool Connection_Active() const = 0;
+
+	virtual bool IsLoginSuccese()const = 0;
+
+	virtual void Close() = 0;
+
+	////////////////////this area interface is relative to data transfer
+	virtual bool SendData(void *message, size_t size) = 0;//send normal data(include text、binarary etc)
+
+	virtual std::string& RecieveFile(const std::string & guid, const std::string &filepath) = 0;//according the filepath create a file resource
+
+
+	virtual bool SendFile(std::string &filename) = 0;//the action which is to according the filepath to send file
+	virtual std::string&  CreateBarcodeFile( void * res) = 0;//create a file which have a guid code,add it to respository,then return the guid code of the file
+	virtual bool DeleteBasecodeFile(void * guid) = 0;
+	virtual bool SaveFileData(std::string &guid, void * data) = 0;//return this save deal is succese
+	/////////////////////////////////////////////////
+	virtual ConductorBase*  GetConductResource() = 0; //get the resource class ,now the class only has one resource repository
+	virtual TransferDataBase *	 GetMessageObserver() = 0;									  ////////////////////
+public:
+	virtual bool InitializePeerConnection() = 0;
+
+	virtual bool ReinitializePeerConnectionForLoopback() = 0;
+	///create the connection to the turnserver connection
+	virtual bool CreatePeerConnection(bool dtls) = 0;
+
+	virtual void DeletePeerConnection() = 0;
+
+	virtual void AddStreams() = 0;
+	// PeerConnectionObserver implementation.
+	virtual void OnSignalingChange(int new_state) = 0;
+	virtual void OnAddStream(void* stream) = 0;
+
+	virtual void OnRemoveStream(void* stream) = 0;
+
+	virtual void OnDataChannel(void* channel) = 0;
+
+	virtual void OnRenegotiationNeeded() = 0;
+
+	virtual void OnIceConnectionChange(int type , int new_state) = 0;
+
+	virtual void OnIceGatheringChange(int type, int new_state) = 0;
+
+	virtual void OnIceCandidate(const void* candidate) = 0;
+
+	virtual void OnIceConnectionReceivingChange(bool receiving) = 0;
+	//
+	//There are some function define by self which relate peer ---peer interactive
+	//
+	virtual void OnSignedIn(void * param) = 0;
+
+	virtual void OnDisconnected() = 0;
+
+	virtual void OnPeerConnected(void *id) = 0;
+
+	virtual void OnPeerDisconnected(void * id) = 0;
+
+	virtual void OnPeerConnectedServer(void* id) = 0;
+
+	virtual void OnPeerDisConnectedServer(void* id) = 0;
+
+	virtual void OnNeedReConnectionTurnserver(const int & type, const int & state) = 0;
+
+	virtual void OnMessageFromPeer(void *id, const std::string& message) = 0;
+
+	virtual void OnMessageSent(int err) = 0;
+
+	virtual void OnServerConnectionFailure() = 0;
+	//
+	//  ClientOutterInterfaceOriginal implementation.  use for outter interface
+	//
+
+	virtual void StartLogin(const std::string& server, int port) = 0;
+
+	virtual void DisconnectFromServer() = 0;
+
+	virtual void ConnectToPeer(void * info) = 0;
+
+	virtual void DisconnectFromCurrentPeer() = 0;
+	//WebrtcClientOutterIterator implementation. use for connection signal server
+	//
+	virtual void CallbackWebrtcClient(int msg_id, void* data) = 0;
+
+	virtual void OnSuccess(void* desc) = 0;
+
+	virtual void OnFailure(const std::string& error) = 0;
+
+public:
+	virtual void AddTurnServerInfo(const TurnserverInfo &info) = 0;
+
+	virtual void AddSinalServerInfo(const ServerInfo &info) = 0;
+public:
+	virtual WebrtcClientOriginal *  GetWebrtcClient() = 0;
+
+	virtual ClientOutterInterfaceOriginal * GetOutterClient() = 0;
+
+	virtual TransferProgressPacket * TransferProgress(std::string &resGuid) = 0;
+	virtual const void* GetOppositeID()const = 0;
+	virtual bool SetOppositeID(void * info) = 0;
+	virtual const void*  GetOwerID()const = 0;
+	virtual bool IsCurrentOppositeID(void *id)const = 0;
+	virtual bool IsValid() = 0;
+protected:
+	virtual void CallMessage(const std::string& json_object) = 0;
+protected:
+	virtual void StartLocalRenderer(void* local_video) = 0;
+	virtual void StopLocalRenderer() = 0;
+	virtual void StartRemoteRenderer(void* remote_video) = 0;
+	virtual void StopRemoteRenderer() = 0;
+};
+
+class WEBRTCP2PDLLSHARED_EXPORT WebrtcConductor: public WebrtcConductorBase
+{
+public:
+	WebrtcConductor(WebrtcClientOriginal* peerConnectClient, ClientOutterInterfaceOriginal *outterUserClient);
+
+	virtual ~WebrtcConductor();
+public:
+	virtual bool Connection_Active() const;
+
+	virtual bool IsLoginSuccese()const;
+
+	virtual void Close();
+
+	////////////////////add by  to send message messag type is void* size is the message size
+	virtual bool SendData(void *message, size_t size);//send normal data(include text、binarary etc)
+
+	virtual std::string& RecieveFile(const std::string & guid, const std::string &filepath);//according the filepath create a file resource
+
+	virtual void  AcceptFile(void * param);
+	virtual void  RefuseFile(void * param);
+	virtual bool  InterruptFileTask(void * param);
+	virtual bool  RestartFileTask(void * param);
+	virtual bool  CancleFileTask(void * param);
+	virtual bool  CreateRecieveFile(void * param, void * param1);
+	virtual bool  DeleteRecieveFile(void * param);
+
+	virtual bool SendFile(std::string &filename);//the action which is to according the filepath to send file
+
+	virtual std::string&  CreateBarcodeFile(void * res);
+	virtual bool DeleteBasecodeFile(void * guid);
+	virtual bool SaveFileData(std::string &guid, void * data);//return this save deal is succese
+	///////////////////////////////////////
+	virtual ConductorBase*  GetConductResource(); //get the resource class ,now the class only has one resource repository
+	virtual TransferDataBase *	 GetMessageObserver();
+	////////////////////
+public:
+	virtual bool InitializePeerConnection();
+
+	virtual bool ReinitializePeerConnectionForLoopback();
+	///create the connection to the turnserver connection
+	virtual bool CreatePeerConnection(bool dtls);
+
+	virtual void DeletePeerConnection();
+
+	virtual void AddStreams();
+	// PeerConnectionObserver implementation.
+	virtual void OnSignalingChange(int new_state) override;
+	virtual void OnAddStream(void* stream) override;
+
+	virtual void OnRemoveStream(void* stream) override;
+	
+	virtual void OnDataChannel(void* channel) override;
+
+	virtual void OnRenegotiationNeeded() override;
+
+	virtual void OnIceConnectionChange(int type, int new_state) override;
+
+	virtual void OnIceGatheringChange(int type, int new_state) override;
+
+	virtual void OnIceCandidate(const void* candidate) override;
+	
+	virtual void OnIceConnectionReceivingChange(bool receiving) override;
+	//
+	//There are some function define by self which relate peer ---peer interactive
+	//
+	virtual void OnSignedIn(void * param);
+
+	virtual void OnDisconnected();
+
+	virtual void OnPeerConnected(void *id) ;
+
+	virtual void OnPeerDisconnected(void * id) ;
+
+	virtual void OnPeerConnectedServer(void* id);
+
+	virtual void OnPeerDisConnectedServer(void* id);
+
+	virtual void OnNeedReConnectionTurnserver(const int & type, const int & state);
+
+	virtual void OnMessageFromPeer(void *id, const std::string& message);
+
+	virtual void OnMessageSent(int err);
+
+	virtual void OnServerConnectionFailure();
+	//
+	//  ClientOutterInterfaceOriginal implementation.  use for outter interface
+	//
+
+	virtual void StartLogin(const std::string& server, int port);
+
+	virtual void DisconnectFromServer();
+
+	virtual void ConnectToPeer(void * info);
+
+	virtual void DisconnectFromCurrentPeer();
+	//WebrtcClientOutterIterator implementation. use for connection signal server
+	//
+	//virtual void CallbackWebrtcClient(int msg_id, void* data) = 0;
+	virtual void CallbackWebrtcClient(int msg_id, void* data);
+	// CreateSessionDescriptionObserver implementation.
+	virtual void OnSuccess(void* desc);
+
+	virtual void OnFailure(const std::string& error);
+
+public:
+	virtual void AddTurnServerInfo(const TurnserverInfo &info);
+
+	virtual void AddSinalServerInfo(const ServerInfo &info);
+public:
+	virtual WebrtcClientOriginal *  GetWebrtcClient();
+
+	virtual ClientOutterInterfaceOriginal * GetOutterClient();
+
+	virtual TransferProgressPacket * TransferProgress(std::string &resGuid);
+	virtual const void* GetOppositeID()const final;
+	virtual bool SetOppositeID(void * info)final;
+	virtual const void*  GetOwerID()const final;
+	virtual bool IsCurrentOppositeID(void *id)const final;
+	virtual bool IsValid() final;
+	virtual void CreateP2PThreadManager(P2PThreadManagerBase * value);
+	virtual void ReleaseP2PThreadManager();
+	virtual void CreateConductor(ConductorBase * value);
+	virtual void ReleaseConductor();
+	virtual void  SetOppositeSDPInformation(const std::string & sdp);
+	virtual void  SetOppositeIceCandidate(const std::vector<std::string>&icecandidate);
+	virtual const std::string&   GetOwerSDPInformation();
+	virtual const std::vector<std::string> * GetOwerIceCandidate();
+protected:
+	virtual void CallMessage(const std::string& json_object);
+	virtual void DealOwerSessionSDP(void* desc);//deal the sdp info which create by self
+	virtual void DealOwerIceCandidate(const void* candidate);//deal the candidate info which create by self
+	virtual void DealOppositeSessionSDP(const void*  message);//deal the sdp info which receive from opposite
+	virtual void DealOppositeIceCandidate(const void * message);//deal the candidate info which receive from opposite
+protected:
+	virtual void StartLocalRenderer(void* local_video);
+	virtual void StopLocalRenderer();
+	virtual void StartRemoteRenderer(void* remote_video);
+	virtual void StopRemoteRenderer();
+public:
+	friend class SessionConnectionObserverInterface;
+protected:
+	WebrtcClientOriginal* m_clientConnector;//webrtc connection interface  class , delete by call office
+	ClientOutterInterfaceOriginal* m_outterClient;//outter client interface class, delete by call office
+	ContainerInfoShaowBase * m_pending_messages_;
+	TransferDataBase *m_messageClientObserver;
+	P2PThreadManagerBase *m_fileThreadManager;
+	ConductorBase *m_fileDataRepository;
+protected:
+	SessionConnectionObserverInterface* m_sessionConnectionObserver;//this param is user for to create connection and deal session issuse
+};
+
+DllExtern_Fixed_Interface_2(WebrtcConductorBase,  WebrtcClientOriginalOutter *, ClientOutterInterfaceOriginal*)
+/////////////inhret WebrtcConductor, and override some virtual function of WebrtcConductor
+class WEBRTCP2PDLLSHARED_EXPORT WebrtcConductorDecorator :public WebrtcClientObserver, public WebrtcClientOutterIterator
+	, public ConductorBusiness
+{
+public:
+	virtual ~WebrtcConductorDecorator();
+public:
+	//WebrtcClientOutterIterator's interface
+	virtual void CallbackWebrtcClient(int msg_id, void* data) = 0;
+	
+	virtual void OnSignedIn(void * param) = 0;
+
+	virtual void OnDisconnected() = 0;
+
+	virtual void OnPeerConnected(void * id) = 0;
+
+	virtual void OnPeerDisconnected(void* peer_id) = 0;
+
+	virtual void OnPeerConnectedServer(void* id) = 0;
+
+	virtual void OnPeerDisConnectedServer(void* id) = 0;
+
+	virtual void OnMessageFromPeer(void* peer_id, const std::string& message) = 0;
+
+	virtual void OnMessageSent(int err) = 0;
+
+	virtual void OnServerConnectionFailure() = 0;
+	//the way which outter interface want to know, they must  call the function 
+	virtual bool Connection_Active() = 0;
+
+	virtual bool LoginInSuccese() = 0;
+	//////////////ConductorBusiness interface
+	virtual void CreateP2PThreadManager(P2PThreadManagerBase * value) = 0;
+	virtual void ReleaseP2PThreadManager() = 0;
+	virtual void CreateConductor(ConductorBase * value) = 0;
+	virtual void ReleaseConductor() = 0;
+	virtual void AddTurnServerInfo(const TurnserverInfo &info) = 0;
+	virtual void AddSinalServerInfo(const ServerInfo &info) = 0;
+
+	virtual void  SetOppositeSDPInformation(const std::string & sdp) = 0;
+	virtual void  SetOppositeIceCandidate(const std::vector<std::string >&icecandidate) = 0;
+	virtual const std::string&   GetOwerSDPInformation() = 0;
+	const std::vector<std::string> * GetOwerIceCandidate() = 0;
+
+	virtual void  AcceptFile(void * param) = 0;
+	virtual void  RefuseFile(void * param) = 0;
+	virtual bool  InterruptFileTask(void * param) = 0;
+	virtual bool  RestartFileTask(void * param) = 0;
+	virtual bool  CancleFileTask(void * param) = 0;
+	virtual bool  CreateRecieveFile(void * param, void * param1) = 0;
+	virtual bool  DeleteRecieveFile(void * param) = 0;
+
+	virtual bool InitializePeerConnection() = 0;
+};
+DllExtern_Fixed_Interface_2(WebrtcConductorDecorator, WebrtcClientOriginalOutter *, ClientOutterInterfaceOriginal*);
+
+EXTERN_C_END
+#endif
